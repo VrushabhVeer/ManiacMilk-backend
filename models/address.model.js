@@ -10,8 +10,8 @@ const addressSchema = new mongoose.Schema(
     city: { type: String, required: true },
     pincode: { type: String, required: true },
     state: { type: String, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, 
   },
-  { timestamps: true }
 );
 
 const AddressModel = mongoose.model("address", addressSchema);

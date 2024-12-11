@@ -6,9 +6,18 @@ const addressRouter = Router();
 // Add a new address
 addressRouter.post("/create", async (req, res) => {
   try {
-    const { fullname, mobile, email, house, area, city, pincode, state } = req.body;
+    const {
+      fullname,
+      mobile,
+      email,
+      house,
+      area,
+      city,
+      pincode,
+      state,
+      userId,
+    } = req.body;
 
-    // Create new address
     const newAddress = new AddressModel({
       fullname,
       mobile,
@@ -18,18 +27,22 @@ addressRouter.post("/create", async (req, res) => {
       city,
       pincode,
       state,
+      userId,
     });
 
     // Save to database
     await newAddress.save();
 
-    res.status(201).json({ message: "Address added successfully.", address: newAddress });
+    res
+      .status(201)
+      .json({ message: "Address added successfully.", address: newAddress });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "An error occurred while saving the address.", error });
+    res
+      .status(500)
+      .json({ message: "An error occurred while saving the address.", error });
   }
 });
-
 
 // get address by id
 

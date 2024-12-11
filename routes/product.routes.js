@@ -3,21 +3,32 @@ import ProductModel from "../models/product.model.js";
 
 const productRouter = Router();
 
-// create a single product
+// Create a single product
 productRouter.post("/create", async (req, res) => {
   try {
-    const { name, image, price, category, availability, tags, unit } = req.body;
-
-    const product = new ProductModel({
+    const {
       name,
-      image,
-      price,
+      frontImage,
+      backImage,
       category,
       availability,
       tags,
       unit,
-    });
+      description,
+      sizes,
+    } = req.body;
 
+    const product = new ProductModel({
+      name,
+      frontImage,
+      backImage,
+      category,
+      availability,
+      tags,
+      unit,
+      description,
+      sizes,
+    });
     await product.save();
 
     res.status(201).json({ message: "Product created successfully", product });
@@ -31,16 +42,17 @@ productRouter.post("/create", async (req, res) => {
 productRouter.post("/allproducts", async (req, res) => {
   try {
     const { products } = req.body;
-
-    const createProducts = await ProductModel.insertMany(products);
-    res.status(201).json({ message: "Products created successfully", createProducts });
+    const createdProducts = await ProductModel.insertMany(products);
+    res
+      .status(201)
+      .json({ message: "Products created successfully", createdProducts });
   } catch (error) {
     console.error("Error creating multiple products:", error.message);
     res.status(500).json({ message: "Failed to create products" });
   }
 });
 
-// get all products
+// Get all products
 productRouter.get("/allproducts", async (req, res) => {
   try {
     const products = await ProductModel.find();
@@ -51,7 +63,7 @@ productRouter.get("/allproducts", async (req, res) => {
   }
 });
 
-//get single product by id
+// Get a single product by ID
 productRouter.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -75,17 +87,16 @@ productRouter.put("/:id", async (req, res) => {
     const updates = req.body;
 
     const updatedProduct = await ProductModel.findByIdAndUpdate(id, updates, {
-      new: true, // Returns the updated document
+      new: true,
     });
 
     if (!updatedProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.status(200).json({
-      message: "Product updated successfully",
-      updatedProduct,
-    });
+    res
+      .status(200)
+      .json({ message: "Product updated successfully", updatedProduct });
   } catch (error) {
     console.error("Error updating product:", error.message);
     res.status(500).json({ message: "Failed to update product" });
@@ -102,10 +113,9 @@ productRouter.delete("/:id", async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.status(200).json({
-      message: "Product deleted successfully",
-      deletedProduct,
-    });
+    res
+      .status(200)
+      .json({ message: "Product deleted successfully", deletedProduct });
   } catch (error) {
     console.error("Error deleting product:", error.message);
     res.status(500).json({ message: "Failed to delete product" });

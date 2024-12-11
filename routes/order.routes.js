@@ -1,34 +1,26 @@
 import { Router } from "express";
 import OrderModel from "../models/order.model.js";
+import auth from "../middlewares/authentication.js";
 
 const orderRouter = Router();
 
 // Place a new order
 orderRouter.post("/place", async (req, res) => {
+  const {
+    userId,
+    cartItems,
+    address,
+    paymentMethod,
+    razorpayPaymentId,
+    razorpayOrderId,
+    subtotal,
+    shipping,
+    total,
+  } = req.body;
+
   try {
-    const {
-      cartItems,
-      address,
-      paymentMethod,
-      razorpayPaymentId,
-      razorpayOrderId,
-      subtotal,
-      shipping,
-      total,
-    } = req.body;
-
-    if (!cartItems || cartItems.length === 0) {
-      return res.status(400).json({ success: false, message: "Cart is empty" });
-    }
-
-    if (!address || !paymentMethod || !subtotal || !shipping || !total) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Incomplete order details" });
-    }
-
-    // Create a new order
     const order = new OrderModel({
+      userId,
       cartItems,
       address,
       paymentMethod,
@@ -51,10 +43,59 @@ orderRouter.post("/place", async (req, res) => {
   }
 });
 
-// Get a specific order by ID (for Placed.jsx page or admin)
-orderRouter.get("/:orderId", async (req, res) => {
+// Get all orders
+orderRouter.get("/allorders", auth, async (req, res) => {
   try {
-    const order = await OrderModel.findById(req.params.orderId);
+    const orders = await OrderModel.find().sort({ createdAt: -1 }); // Sort by latest orders
+    res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error("Error fetching orders:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Get a specific order by ID
+orderRouter.get("/order/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    const order = await OrderModel.findById(orderId);
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+    return res.status(200).json({ success: true, orders: [order] }); // Return as an array
+  } catch (error) {
+    console.error("Error fetching order:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// Get a order by user ID
+orderRouter.get("/user/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const orders = await OrderModel.find({ userId });
+    if (orders.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+    return res.status(200).json({ success: true, orders }); // Return as an array
+  } catch (error) {
+    console.error("Error fetching order:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// cancel order by orderId
+orderRouter.put("/cancel/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    const order = await OrderModel.findById(orderId);
 
     if (!order) {
       return res
@@ -62,21 +103,27 @@ orderRouter.get("/:orderId", async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
 
-    return res.status(200).json({ success: true, order });
-  } catch (error) {
-    console.error("Error fetching order:", error.message);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
+    if (order.status === "Cancelled") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Order is already cancelled" });
+    }
 
-// Get all orders
-orderRouter.get("/allorders", async (req, res) => {
-  try {
-    const orders = await OrderModel.find().sort({ createdAt: -1 }); // Sort by latest orders
-    res.status(200).json({ success: true, orders });
+    // Update the order status to "Cancelled"
+    order.status = "Cancelled";
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully",
+      order,
+    });
   } catch (error) {
-    console.error("Error fetching orders:", error.message);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({
+      success: false,
+      message: "Error cancelling order",
+      error: error.message,
+    });
   }
 });
 

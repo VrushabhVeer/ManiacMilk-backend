@@ -2,11 +2,10 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
 dotenv.config();
-
 const key = process.env.SECRETKEY;
 
 const auth = (req, res, next) => {
-  const token = req.headers?.authorization?.split(" ")[1];
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res
@@ -16,10 +15,10 @@ const auth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, key);
-    req.body.userId = decoded.userId;
+    req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ msg: "Invalid token. Please login again." });
+    res.status(403).json({ message: "Invalid or expired token." });
   }
 };
 

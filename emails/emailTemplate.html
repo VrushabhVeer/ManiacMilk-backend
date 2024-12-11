@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OTP</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fc;
+            color: #333;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 150px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        /* OTP Section */
+        .otp-title {
+            text-align: center;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .otpBox {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .otp {
+            font-size: 26px;
+            font-weight: bold;
+            color: #16522e;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+
+        .otp-description {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .otp-description strong {
+            color: #d9534f;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        .footer .important {
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <img src="https://img.freepik.com/free-vector/flat-design-cow-logo-design_23-2149593234.jpg?t=st=1733220944~exp=1733224544~hmac=7dce3a7ef2e7dab0f2a0d713c944cb95146123f91ff2a47e95ba6a2ecee48a32&w=740"
+                alt="Company Logo" class="logo" loading="lazy" />
+        </div>
+
+        <!-- OTP Message -->
+        <p class="otp-title">Your login code</p>
+        <div class="otpBox">
+            <p class="otp">{{otp}}</p>
+            <p class="otp-description">
+                Please use this code within the next <strong>15 minutes</strong> to complete your login.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>© Maniac Milk</p>
+            <p class="important">
+                205, Ugam Tower, Shantinagar, Gandhi Marg, Karanja, Maharashtra 444105
+            </p>
+            <p>This is an automated message. Please do not reply.</p>
+        </div>
+    </div>
+</body>
+
+</html>
