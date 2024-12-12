@@ -29,3 +29,5 @@ Thumbs.db
 tmp/
 temp/
 .cache/
+.env
+node_modules/
