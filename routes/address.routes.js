@@ -7,7 +7,8 @@ const addressRouter = Router();
 addressRouter.post("/create", async (req, res) => {
   try {
     const {
-      fullname,
+      firstname,
+      lastname,
       mobile,
       email,
       house,
@@ -19,7 +20,8 @@ addressRouter.post("/create", async (req, res) => {
     } = req.body;
 
     const newAddress = new AddressModel({
-      fullname,
+      firstname,
+      lastname,
       mobile,
       email,
       house,
@@ -44,6 +46,71 @@ addressRouter.post("/create", async (req, res) => {
   }
 });
 
-// get address by id
+// Get address by user ID
+addressRouter.get("/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const address = await AddressModel.findOne({ userId });
+
+    if (!address) {
+      return res.status(404).json({ message: "Address not found." });
+    }
+
+    res.status(200).json(address);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while retrieving the address.", error });
+  }
+});
+
+// Edit (update) an address by ID
+addressRouter.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const updatedAddress = await AddressModel.findByIdAndUpdate(id, updateData, {
+      new: true, // Return the updated document
+      runValidators: true, // Ensure validation runs on update
+    });
+
+    if (!updatedAddress) {
+      return res.status(404).json({ message: "Address not found." });
+    }
+
+    res.status(200).json({
+      message: "Address updated successfully.",
+      address: updatedAddress,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while updating the address.", error });
+  }
+});
+
+// Delete an address by ID
+addressRouter.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedAddress = await AddressModel.findByIdAndDelete(id);
+
+    if (!deletedAddress) {
+      return res.status(404).json({ message: "Address not found." });
+    }
+
+    res.status(200).json({ message: "Address deleted successfully." });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while deleting the address.", error });
+  }
+});
 
 export default addressRouter;

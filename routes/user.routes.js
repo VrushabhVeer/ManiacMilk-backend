@@ -78,7 +78,7 @@ userRouter.post("/send_otp", (req, res) => {
 });
 
 // Route to verify OTP
-userRouter.post("/otp_verification", (req, res) => {
+userRouter.post("/otp_verification", async (req, res) => {
   const { email, otp } = req.body;
 
   // Validate email and OTP
@@ -99,31 +99,71 @@ userRouter.post("/otp_verification", (req, res) => {
     return res.status(400).json({ message: "OTP expired." });
   }
 
-  if (storedOtpData.otp === otp) {
-    delete otpStore[email];
+  if (storedOtpData.otp !== otp) {
+    return res.status(400).json({ message: "Invalid OTP." });
+  }
+
+  delete otpStore[email];
+
+  try {
+    let user = await UserModel.findOne({ email });
+
+    if (!user) {
+      user = new UserModel({ email });
+      await user.save();
+    }
 
     const token = jwt.sign({ email }, key, { expiresIn: "1h" });
 
-    return res
-      .status(200)
-      .json({ message: "OTP verified successfully.", token: token });
-  } else {
-    return res.status(400).json({ message: "Invalid OTP." });
+    res.status(200).json({
+      message: "OTP verified successfully.",
+      token,
+      user,
+    });
+  } catch (error) {
+    console.error("Error during OTP verification:", error);
+    res.status(500).json({ message: "Server error. Please try again." });
   }
 });
 
 userRouter.post("/create", async (req, res) => {
-  const { fullname, email, mobile } = req.body;
+  const { firstname, lastname, email, mobile } = req.body;
 
   try {
     let user = await UserModel.findOne({ email });
     if (!user) {
-      user = new UserModel({ fullname, email, mobile });
+      user = new UserModel({ firstname, lastname, email, mobile });
       await user.save();
     }
     res.status(200).json(user);
   } catch (error) {
     console.error("User creation/login error:", error);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
+});
+
+userRouter.put("/edit_profile", auth, async (req, res) => {
+  const { firstname, lastname, mobile } = req.body;
+
+  try {
+    const email = req.user.email;
+
+    // Find and update the user's profile
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { email },
+      { firstname, lastname, mobile },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Profile updated successfully.", user: updatedUser });
+  } catch (error) {
+    console.error("Error updating profile:", error);
     res.status(500).json({ message: "Server error. Please try again." });
   }
 });
@@ -140,6 +180,24 @@ userRouter.get("/profile", auth, async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ message: "Server error." });
+  }
+});
+
+userRouter.delete("/delete_account", auth, async (req, res) => {
+  try {
+    const email = req.user.email;
+
+    // Find and delete the user
+    const deletedUser = await UserModel.findOneAndDelete({ email });
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    res.status(200).json({ message: "Account deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ message: "Server error. Please try again." });
   }
 });
 
