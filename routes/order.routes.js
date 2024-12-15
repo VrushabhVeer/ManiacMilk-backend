@@ -44,7 +44,7 @@ orderRouter.post("/place", async (req, res) => {
 });
 
 // Get all orders
-orderRouter.get("/allorders", auth, async (req, res) => {
+orderRouter.get("/admin/allorders", auth, async (req, res) => {
   try {
     const orders = await OrderModel.find().sort({ createdAt: -1 }); // Sort by latest orders
     res.status(200).json({ success: true, orders });
