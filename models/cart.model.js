@@ -16,19 +16,6 @@ const cartSchema = new mongoose.Schema(
         productId: { type: String, required: true }, // ID of the product
         name: { type: String, required: true },
         frontImage: { type: String, required: true },
-        // backImage: { type: String },
-        // category: { type: String, required: true },
-        // availability: { type: String, required: true },
-        // tags: [String],
-        // unit: { type: String },
-        // description: { type: String },
-        // sizes: [
-        //   {
-        //     size: { type: String },
-        //     price: { type: Number },
-        //     _id: { type: String },
-        //   },
-        // ],
         selectedSize: selectedSizeSchema,
         quantity: { type: Number, default: 1 },
       },
