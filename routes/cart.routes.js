@@ -99,7 +99,7 @@ cartRouter.put("/edit", async (req, res) => {
 });
 
 // Clear all items in the cart
-cartRouter.delete("/clear", async (req, res) => {
+cartRouter.post("/clear", async (req, res) => {
   try {
     const { userId } = req.body;
 
@@ -126,16 +126,16 @@ cartRouter.delete("/clear", async (req, res) => {
 // Merge guest cart into user cart
 cartRouter.post("/merge", async (req, res) => {
   try {
-    const { userId, guestCart } = req.body;
+    const { userId, items } = req.body;
 
-    if (!userId || !guestCart) {
+    if (!userId || !items) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     const cart = await CartModel.findOne({ userId });
 
     if (cart) {
-      guestCart.items.forEach((guestItem) => {
+      items.forEach((guestItem) => {
         const itemIndex = cart.items.findIndex(
           (item) =>
             item.productId === guestItem.productId &&
@@ -143,26 +143,25 @@ cartRouter.post("/merge", async (req, res) => {
         );
 
         if (itemIndex > -1) {
-          // Merge quantities
-          cart.items[itemIndex].quantity += guestItem.quantity;
+          cart.items[itemIndex].quantity += guestItem.quantity; // Merge quantities
         } else {
-          // Add new item
-          cart.items.push(guestItem);
+          cart.items.push(guestItem); // Add new item
         }
       });
 
       await cart.save();
       return res.status(200).json(cart);
     } else {
-      // Create a new cart with guest cart items
+      // Create a new cart
       const newCart = new CartModel({
         userId,
-        items: guestCart.items,
+        items,
       });
       await newCart.save();
       return res.status(201).json(newCart);
     }
   } catch (error) {
+    console.error("Error merging cart:", error);
     return res.status(500).json({ message: "Server error", error });
   }
 });
