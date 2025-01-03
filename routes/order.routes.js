@@ -44,7 +44,7 @@ orderRouter.post("/place", async (req, res) => {
 });
 
 // Get all orders
-orderRouter.get("/admin/allorders", auth, async (req, res) => {
+orderRouter.get("/admin/allorders", async (req, res) => {
   try {
     const orders = await OrderModel.find().sort({ createdAt: -1 }); // Sort by latest orders
     res.status(200).json({ success: true, orders });
@@ -126,5 +126,43 @@ orderRouter.put("/cancel/:orderId", async (req, res) => {
     });
   }
 });
+
+// Mark order as completed by orderId
+orderRouter.put("/complete/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    const order = await OrderModel.findById(orderId);
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    if (order.status === "Completed") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Order is already completed" });
+    }
+
+    // Update the order status to "Completed"
+    order.status = "Completed";
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Order marked as completed successfully",
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error marking order as completed",
+      error: error.message,
+    });
+  }
+});
+
 
 export default orderRouter;

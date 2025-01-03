@@ -7,6 +7,10 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import fs from "fs";
 import auth from "../middlewares/authentication.js";
+import CartModel from "../models/cart.model.js";
+import AddressModel from "../models/address.model.js";
+import OrderModel from "../models/order.model.js";
+import PaymentModel from "../models/payment.model.js";
 
 dotenv.config();
 
@@ -193,6 +197,19 @@ userRouter.delete("/delete_account", auth, async (req, res) => {
     if (!deletedUser) {
       return res.status(404).json({ message: "User not found." });
     }
+    // Delete related data (Cart, Address, Orders, Payments)
+
+     // Deleting cart data for the user
+     await CartModel.deleteMany({ userId: deletedUser._id });
+
+     // Deleting address data for the user
+     await AddressModel.deleteMany({ userId: deletedUser._id });
+  
+     // Deleting orders related to the user
+     await OrderModel.deleteMany({ userId: deletedUser._id });
+ 
+     // Deleting payment records related to the user
+     await PaymentModel.deleteMany({ userId: deletedUser._id });
 
     res.status(200).json({ message: "Account deleted successfully." });
   } catch (error) {
@@ -201,13 +218,32 @@ userRouter.delete("/delete_account", auth, async (req, res) => {
   }
 });
 
-userRouter.post("/logout", (req, res) => {
-  res.status(200).json({ message: "Logged out successfully." });
+// Admin login route
+userRouter.post("/admin/login", (req, res) => {
+  const { email, password } = req.body;
+
+  // Validate email and password
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required." });
+  }
+
+  // Fixed admin credentials
+  const adminEmail = "adminmaniacmilk@email.com";
+  const adminPassword = "maniac@123";
+
+  // Check if credentials match
+  if (email === adminEmail && password === adminPassword) {
+    const token = jwt.sign({ email, role: "admin" }, key, { expiresIn: "1h" }); // Generate JWT
+    return res.status(200).json({ message: "Login successful.", token });
+  } else {
+    return res.status(401).json({ message: "Invalid credentials." });
+  }
 });
 
+// Route to fetch all users (admin only)
 userRouter.get("/admin/allusers", async (req, res) => {
   try {
-    const users = await UserModel.find(); // Include _id but exclude __v
+    const users = await UserModel.find();
     res.status(200).json({ users });
   } catch (error) {
     console.error("Error fetching users:", error);
