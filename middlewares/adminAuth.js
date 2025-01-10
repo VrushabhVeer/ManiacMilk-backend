@@ -4,8 +4,8 @@ import dotenv from "dotenv";
 dotenv.config();
 const key = process.env.SECRETKEY;
 
-const auth = (req, res, next) => {
-  const token = req.cookies.auth_token;
+const adminAuth = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res
@@ -15,11 +15,14 @@ const auth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, key);
-    req.user = decoded;
+    if (decoded.role !== "admin") {
+      return res.status(403).json({ message: "Access denied. Admin only." });
+    }
+    req.user = decoded; // Attach user info (like email, role) to the request object
     next();
   } catch (error) {
     res.status(403).json({ message: "Invalid or expired token." });
   }
 };
 
-export default auth;
+export default adminAuth;

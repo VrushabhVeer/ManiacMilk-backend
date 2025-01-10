@@ -11,12 +11,15 @@ import CartModel from "../models/cart.model.js";
 import AddressModel from "../models/address.model.js";
 import OrderModel from "../models/order.model.js";
 import PaymentModel from "../models/payment.model.js";
+// import adminAuth from "../middlewares/adminAuth.js";
 
 dotenv.config();
 
 const senderEmail = process.env.EMAIL_USER;
 const pass = process.env.EMAIL_PASS;
 const key = process.env.SECRETKEY;
+const adminEmail = process.env.ADMINEMAIL;
+const adminPassword = process.env.ADMINPASSWORD;
 const otpStore = {};
 
 const userRouter = Router();
@@ -119,9 +122,17 @@ userRouter.post("/otp_verification", async (req, res) => {
 
     const token = jwt.sign({ email }, key, { expiresIn: "1h" });
 
+    // Set the token as an HttpOnly cookie
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Secure in production
+      sameSite: "Strict",
+      maxAge: 60 * 60 * 1000, // 1 hour
+    });
+
     res.status(200).json({
       message: "OTP verified successfully.",
-      token,
+      // token,
       user,
     });
   } catch (error) {
@@ -199,17 +210,17 @@ userRouter.delete("/delete_account", auth, async (req, res) => {
     }
     // Delete related data (Cart, Address, Orders, Payments)
 
-     // Deleting cart data for the user
-     await CartModel.deleteMany({ userId: deletedUser._id });
+    // Deleting cart data for the user
+    await CartModel.deleteMany({ userId: deletedUser._id });
 
-     // Deleting address data for the user
-     await AddressModel.deleteMany({ userId: deletedUser._id });
-  
-     // Deleting orders related to the user
-     await OrderModel.deleteMany({ userId: deletedUser._id });
- 
-     // Deleting payment records related to the user
-     await PaymentModel.deleteMany({ userId: deletedUser._id });
+    // Deleting address data for the user
+    await AddressModel.deleteMany({ userId: deletedUser._id });
+
+    // Deleting orders related to the user
+    await OrderModel.deleteMany({ userId: deletedUser._id });
+
+    // Deleting payment records related to the user
+    await PaymentModel.deleteMany({ userId: deletedUser._id });
 
     res.status(200).json({ message: "Account deleted successfully." });
   } catch (error) {
@@ -224,12 +235,10 @@ userRouter.post("/admin/login", (req, res) => {
 
   // Validate email and password
   if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required." });
+    return res
+      .status(400)
+      .json({ message: "Email and password are required." });
   }
-
-  // Fixed admin credentials
-  const adminEmail = "adminmaniacmilk@email.com";
-  const adminPassword = "maniac@123";
 
   // Check if credentials match
   if (email === adminEmail && password === adminPassword) {
