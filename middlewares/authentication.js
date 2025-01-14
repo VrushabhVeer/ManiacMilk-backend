@@ -5,7 +5,7 @@ dotenv.config();
 const key = process.env.SECRETKEY;
 
 const auth = (req, res, next) => {
-  const token = req.cookies.auth_token;
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res

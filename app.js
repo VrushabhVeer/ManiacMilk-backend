@@ -9,6 +9,7 @@ import addressRouter from "./routes/address.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 dotenv.config();
 const key = process.env.RAZORPAY_API_KEY;
@@ -21,6 +22,8 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cors({ origin: origin, credentials: true }));
 app.use(cookieParser());
+// Serve static files for uploaded images
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // routes
 app.get("/", (_, res) => {

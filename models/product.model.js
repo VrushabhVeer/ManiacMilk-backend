@@ -9,10 +9,12 @@ const productSchema = new mongoose.Schema(
     },
     frontImage: {
       type: String,
-      required: true,
     },
     backImage: {
       type: String,
+    },
+    price: {
+      type: Number,
       required: true,
     },
     category: {
@@ -31,7 +33,7 @@ const productSchema = new mongoose.Schema(
     },
     unit: {
       type: String,
-      enum: ["Ltr", "Kg", "Gram"],
+      enum: ["Ltr", "Kg"],
       required: true,
     },
     description: {
@@ -43,6 +45,7 @@ const productSchema = new mongoose.Schema(
         size: {
           type: String,
           required: true,
+          unique: true,
         },
         price: {
           type: Number,

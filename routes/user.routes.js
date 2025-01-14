@@ -122,17 +122,9 @@ userRouter.post("/otp_verification", async (req, res) => {
 
     const token = jwt.sign({ email }, key, { expiresIn: "1h" });
 
-    // Set the token as an HttpOnly cookie
-    res.cookie("auth_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure in production
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 1000, // 1 hour
-    });
-
     res.status(200).json({
       message: "OTP verified successfully.",
-      // token,
+      token,
       user,
     });
   } catch (error) {
