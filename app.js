@@ -9,12 +9,13 @@ import addressRouter from "./routes/address.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import cookieParser from "cookie-parser";
+import databaseConnection from "./config/db.js";
 import path from "path";
 
 dotenv.config();
 const key = process.env.RAZORPAY_API_KEY;
 const origin = process.env.CROSS_ORIGIN;
-
+const port = process.env.PORT || 3001;
 const app = express();
 
 // middlewares
@@ -39,5 +40,15 @@ app.use("/getKey", (_, res) => {
 });
 
 app.use("/orders", orderRouter);
+
+
+app.listen(port, async () => {
+  try {
+    await databaseConnection();
+  } catch (error) {
+    process.exit(1);
+  }
+  console.log(`server is running on ${port}`);
+});
 
 export default app;
