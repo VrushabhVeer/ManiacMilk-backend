@@ -1,66 +1,69 @@
 import { Router } from "express";
 import ProductModel from "../models/product.model.js";
-import upload from "../middlewares/multerMiddleware.js";
+import multer from "multer";
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Directory to save uploaded files
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`); // Unique filename
+  },
+});
+
+const upload = multer({ storage });
+
 const productRouter = Router();
 
 // Create a single product
-productRouter.post(
-  "/create",
-  upload.fields([
-    { name: "frontImage", maxCount: 1 },
-    { name: "backImage", maxCount: 1 },
-  ]),
-  async (req, res) => {
-    try {
-      const {
-        name,
-        category,
-        availability,
-        tags,
-        unit,
-        description,
-        sizes,
-        price,
-      } = req.body;
+productRouter.post("/create", upload.single("frontImage"), async (req, res) => {
+  console.log("Request Body:", req.body);
+  console.log("Uploaded File:", req.file);
 
-      console.log("Request Body:", req.body);
-      console.log("Uploaded Files:", req.files);
+  try {
+    const {
+      name,
+      category,
+      availability,
+      tags,
+      unit,
+      description,
+      sizes,
+      price,
+    } = req.body;
 
-      const parsedSizes = sizes ? JSON.parse(sizes) : [];
+    const frontImageName = req.file?.filename;
+    const frontImageUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/uploads/${frontImageName}`;
+    const parsedSizes = sizes ? JSON.parse(sizes) : [];
 
-      const frontImagePath = req.files?.frontImage?.[0]?.path || null;
-      const backImagePath = req.files?.backImage?.[0]?.path || null;
-
-      if (!name || !category || !unit || !description || !price) {
-        return res.status(400).json({ message: "Required fields are missing" });
-      }
-
-      const product = new ProductModel({
-        name,
-        frontImage: frontImagePath ? `/${frontImagePath}` : null,
-        backImage: backImagePath ? `/${backImagePath}` : null,
-        category,
-        availability,
-        tags,
-        unit,
-        description,
-        price,
-        sizes: parsedSizes.filter(
-          (s, index, self) => index === self.findIndex((t) => t.size === s.size)
-        ),
-      });
-
-      await product.save();
-
-      res
-        .status(201)
-        .json({ message: "Product created successfully", product });
-    } catch (error) {
-      console.error("Error creating product:", error.message);
-      res.status(500).json({ message: "Failed to create product" });
+    if (!name || !category || !unit || !description || !price) {
+      return res.status(400).json({ message: "Required fields are missing" });
     }
+
+    const product = new ProductModel({
+      name,
+      frontImage: frontImageUrl,
+      category,
+      availability,
+      tags,
+      unit,
+      description,
+      price,
+      sizes: parsedSizes.filter(
+        (s, index, self) => index === self.findIndex((t) => t.size === s.size)
+      ),
+    });
+
+    await product.save();
+
+    res.status(201).json({ message: "Product created successfully", product });
+  } catch (error) {
+    console.error("Error creating product:", error.message);
+    res.status(500).json({ message: "Failed to create product" });
   }
-);
+});
 
 // Create multiple products
 productRouter.post("/allproducts", async (req, res) => {
@@ -105,61 +108,59 @@ productRouter.get("/:id", async (req, res) => {
 });
 
 // Update a product with optional image uploads
-productRouter.put(
-  "/:id",
-  upload.fields([{ name: "frontImage" }, { name: "backImage" }]),
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const {
-        name,
-        category,
-        availability,
-        tags,
-        unit,
-        description,
-        sizes,
-        price,
-      } = req.body;
+productRouter.put("/:id", upload.single("frontImage"), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      category,
+      availability,
+      tags,
+      unit,
+      description,
+      sizes,
+      price,
+    } = req.body;
 
-      const parsedSizes = sizes ? JSON.parse(sizes) : [];
+    const parsedSizes = sizes ? JSON.parse(sizes) : [];
 
-      const frontImagePath = req.files?.frontImage?.[0]?.path;
-      const backImagePath = req.files?.backImage?.[0]?.path;
+    const updates = {
+      name,
+      category,
+      availability,
+      tags,
+      unit,
+      description,
+      price,
+      sizes: parsedSizes.filter(
+        (s, index, self) => index === self.findIndex((t) => t.size === s.size)
+      ),
+    };
 
-      const updates = {
-        name,
-        category,
-        availability,
-        tags,
-        unit,
-        description,
-        price,
-        sizes: parsedSizes.filter(
-          (s, index, self) => index === self.findIndex((t) => t.size === s.size)
-        ),
-      };
-
-      if (frontImagePath) updates.frontImage = `/${frontImagePath}`;
-      if (backImagePath) updates.backImage = `/${backImagePath}`;
-
-      const updatedProduct = await ProductModel.findByIdAndUpdate(id, updates, {
-        new: true,
-      });
-
-      if (!updatedProduct) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-
-      res
-        .status(200)
-        .json({ message: "Product updated successfully", updatedProduct });
-    } catch (error) {
-      console.error("Error updating product:", error.message);
-      res.status(500).json({ message: "Failed to update product" });
+    if (req.file) {
+      const frontImageName = req.file.filename;
+      const frontImageUrl = `${req.protocol}://${req.get(
+        "host"
+      )}/uploads/${frontImageName}`;
+      updates.frontImage = frontImageUrl; // Update the image URL if a new one is uploaded
     }
+
+    const updatedProduct = await ProductModel.findByIdAndUpdate(id, updates, {
+      new: true,
+    });
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Product updated successfully", updatedProduct });
+  } catch (error) {
+    console.error("Error updating product:", error.message);
+    res.status(500).json({ message: "Failed to update product" });
   }
-);
+});
 
 // Delete a product by ID
 productRouter.delete("/:id", async (req, res) => {

@@ -10,7 +10,6 @@ import paymentRouter from "./routes/payment.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import cookieParser from "cookie-parser";
 import databaseConnection from "./config/db.js";
-import path from "path";
 
 dotenv.config();
 const key = process.env.RAZORPAY_API_KEY;
@@ -20,11 +19,11 @@ const app = express();
 
 // middlewares
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors({ origin: origin, credentials: true }));
 app.use(cookieParser());
-// Serve static files for uploaded images
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/uploads", express.static("uploads"));
 
 // routes
 app.get("/", (_, res) => {
@@ -38,9 +37,7 @@ app.use("/payment", paymentRouter);
 app.use("/getKey", (_, res) => {
   res.status(200).json({ key: key });
 });
-
 app.use("/orders", orderRouter);
-
 
 app.listen(port, async () => {
   try {
