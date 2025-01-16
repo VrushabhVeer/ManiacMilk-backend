@@ -53,8 +53,27 @@ addressRouter.get("/:userId", async (req, res) => {
 
     const address = await AddressModel.findOne({ userId });
 
+    // If no address exists, optionally create a default address
     if (!address) {
-      return res.status(404).json({ message: "Address not found." });
+      address = new AddressModel({
+        firstname: "Default",
+        lastname: "User",
+        mobile: "0000000000",
+        email: `${userId}@example.com`,
+        house: "N/A",
+        area: "N/A",
+        city: "N/A",
+        pincode: "000000",
+        state: "N/A",
+        userId,
+      });
+
+      // Save the default address
+      await address.save();
+
+      return res
+        .status(201)
+        .json({ message: "Default address created.", address });
     }
 
     res.status(200).json(address);
@@ -62,7 +81,10 @@ addressRouter.get("/:userId", async (req, res) => {
     console.error(error);
     res
       .status(500)
-      .json({ message: "An error occurred while retrieving the address.", error });
+      .json({
+        message: "An error occurred while retrieving the address.",
+        error,
+      });
   }
 });
 
@@ -72,10 +94,14 @@ addressRouter.put("/:id", async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    const updatedAddress = await AddressModel.findByIdAndUpdate(id, updateData, {
-      new: true, // Return the updated document
-      runValidators: true, // Ensure validation runs on update
-    });
+    const updatedAddress = await AddressModel.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true, // Return the updated document
+        runValidators: true, // Ensure validation runs on update
+      }
+    );
 
     if (!updatedAddress) {
       return res.status(404).json({ message: "Address not found." });
@@ -89,7 +115,10 @@ addressRouter.put("/:id", async (req, res) => {
     console.error(error);
     res
       .status(500)
-      .json({ message: "An error occurred while updating the address.", error });
+      .json({
+        message: "An error occurred while updating the address.",
+        error,
+      });
   }
 });
 
@@ -109,7 +138,10 @@ addressRouter.delete("/:id", async (req, res) => {
     console.error(error);
     res
       .status(500)
-      .json({ message: "An error occurred while deleting the address.", error });
+      .json({
+        message: "An error occurred while deleting the address.",
+        error,
+      });
   }
 });
 
