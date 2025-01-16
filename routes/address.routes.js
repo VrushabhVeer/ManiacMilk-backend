@@ -1,5 +1,6 @@
 import { Router } from "express";
 import AddressModel from "../models/address.model.js";
+import auth from "../middlewares/authentication.js";
 
 const addressRouter = Router();
 
@@ -47,33 +48,14 @@ addressRouter.post("/create", async (req, res) => {
 });
 
 // Get address by user ID
-addressRouter.get("/:userId", async (req, res) => {
+addressRouter.get("/:userId", auth, async (req, res) => {
   try {
     const { userId } = req.params;
 
     const address = await AddressModel.findOne({ userId });
 
-    // If no address exists, optionally create a default address
     if (!address) {
-      address = new AddressModel({
-        firstname: "Default",
-        lastname: "User",
-        mobile: "0000000000",
-        email: `${userId}@example.com`,
-        house: "N/A",
-        area: "N/A",
-        city: "N/A",
-        pincode: "000000",
-        state: "N/A",
-        userId,
-      });
-
-      // Save the default address
-      await address.save();
-
-      return res
-        .status(201)
-        .json({ message: "Default address created.", address });
+      return res.status(404).json({ message: "Address not found." });
     }
 
     res.status(200).json(address);
@@ -123,7 +105,7 @@ addressRouter.put("/:id", async (req, res) => {
 });
 
 // Delete an address by ID
-addressRouter.delete("/:id", async (req, res) => {
+addressRouter.delete("/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
 
